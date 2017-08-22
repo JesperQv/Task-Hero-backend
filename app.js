@@ -13,10 +13,13 @@ const expressSession = require('express-session')({
   saveUninitialized: false,
 });
 const User = require('./models/user');
+const Note = require('./models/note');
 
 const index = require('./routes/index');
 const api = require('./routes/api/index');
 const users = require('./routes/api/users');
+const notes = require('./routes/api/notes');
+const authentication = require('./routes/api/authentication');
 
 const app = express();
 
@@ -41,6 +44,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', index);
 app.use('/api', api);
 app.use('/api/users', users);
+app.use('/api/notes', notes);
+app.use('/api/authentication', authentication);
+
+// Configure Passport
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
