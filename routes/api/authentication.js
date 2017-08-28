@@ -1,8 +1,37 @@
 const express = require('express');
 const passport = require('passport');
+const jwt = require('jsonwebtoken');
 const User = require('../../models/user.js');
 
 const router = express.Router();
+
+function generateToken(req, res, next) {
+  console.log('inside generate token');
+  req.token = jwt.sign({
+    id: req.user.username,
+  }, 'server secret', {
+    expiresIn: 60 * 60 * 24,
+  });
+  next();
+}
+
+function respond(req, res) {
+  res.status(200).send(JSON.stringify({
+    user: req.user,
+    token: req.token,
+  }));
+}
+
+function serialize(req, res, next) {
+  passport.authenticate('local')(req, res, () => {
+    // If logged in, we should have user info to send back
+    if (!req.user) {
+      return res.send(JSON.stringify({ error: 'There was an error logging in' }));
+    }
+    console.log('user found');
+    return next();
+  });
+}
 
 // POST to /register
 router.post('/register', (req, res) => {
@@ -26,17 +55,10 @@ router.post('/register', (req, res) => {
 });
 
 // POST to /login
-router.post('/login', (req, res) => {
-  passport.authenticate('local')(req, res, () => {
-    // If logged in, we should have user info to send back
-    if (req.user) {
-      return res.send(JSON.stringify(req.user));
-    }
-
-    // Otherwise return an error
-    return res.send(JSON.stringify({ error: 'There was an error logging in' }));
-  });
-});
+router.post('/login', passport.authenticate(
+  'local', {
+    session: false,
+  }), serialize, generateToken, respond);
 
 // GET to /logout
 router.get('/logout', (req, res) => {
