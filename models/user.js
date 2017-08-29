@@ -9,6 +9,7 @@ const User = new Schema({
   firstname: String,
   lastname: String,
   email: String,
+  clientid: String,
 });
 
 User.plugin(passportLocalMongoose);
