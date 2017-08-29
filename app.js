@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const jwt = require('jsonwebtoken');
 const LocalStrategy = require('passport-local').Strategy;
 const expressSession = require('express-session')({
   secret: 'any random string can go here',
@@ -40,10 +41,35 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 
+function checkTokenValidation(req, res, next) {
+  // check header or url parameters or post parameters for token
+  const token = req.body.token || req.param('token') || req.headers['x-access-token'];
+
+  // decode token
+  if (token) {
+    // verifies secret and checks exp
+    jwt.verify(token, 'server secret', (err, decoded) => {
+      if (err) {
+        return res.json({ success: false, message: 'Failed to authenticate token.' });
+      }
+      // if everything is good, save to request for use in other routes
+      req.user = decoded._doc;
+      return next();
+    });
+  } else {
+    // if there is no token
+    // return an error
+    return res.status(403).send({
+      success: false,
+      message: 'No token provided.',
+    });
+  }
+}
+
 app.use('/', index);
 app.use('/api', api);
-app.use('/api/users', users);
-app.use('/api/notes', notes);
+app.use('/api/users', checkTokenValidation, users);
+app.use('/api/notes', checkTokenValidation, notes);
 app.use('/api/authentication', authentication);
 
 // Configure Passport

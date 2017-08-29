@@ -1,36 +1,96 @@
 const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../../models/user.js');
+const Client = require('../../models/client.js');
 
 const router = express.Router();
 
-function generateToken(req, res, next) {
-  console.log('inside generate token');
-  req.token = jwt.sign({
-    id: req.user.username,
-  }, 'server secret', {
+function generateAccessToken(req, res, next) {
+  req.token = req.token || {};
+  req.token.accessToken = jwt.sign(req.user, 'server secret', {
     expiresIn: 60 * 60 * 24,
   });
   next();
 }
 
-function respond(req, res) {
-  res.status(200).send(JSON.stringify({
-    user: req.user,
-    token: req.token,
-  }));
-}
+const respond = {
+  auth: (req, res) => {
+    res.status(200).json({
+      user: req.user,
+      token: req.token,
+    });
+  },
+  refresh: (req, res) => {
+    res.status(201).json({
+      user: req.user,
+      token: req.token,
+    });
+  },
+  reject: (req, res) => {
+    res.status(204).end();
+  },
+};
 
-function serialize(req, res, next) {
+function serializeUser(req, res, next) {
   passport.authenticate('local')(req, res, () => {
     // If logged in, we should have user info to send back
     if (!req.user) {
       return res.send(JSON.stringify({ error: 'There was an error logging in' }));
     }
-    console.log('user found');
     return next();
   });
+}
+
+function serializeClient(req, res, next) {
+  const newClient = new Client({
+    user: req.user,
+  });
+
+  newClient.save((err) => {
+    if (err) {
+      Client.find((fail, client) => {
+        if (fail) {
+          return res.status(400).send({
+            message: 'error saving client',
+          });
+        }
+        req.user.clientid = client.id;
+        return next();
+      }).where({ user: req.user });
+    }
+    req.user.clientid = newClient.id;
+    return next();
+  });
+}
+
+function generateRefreshToken(req, res, next) {
+  req.token.refreshToken = `${req.user.clientid.toString()}.${crypto.randomBytes(40).toString('hex')}`;
+
+  Client.update({
+    id: req.user.clientid,
+    refreshToken: req.token.refreshToken,
+  }, next);
+}
+
+function validateRefreshToken(req, res, next) {
+  Client.find((err, client) => {
+    if (err || client.length === 0) {
+      return res.status(401).send({
+        message: 'Unauthorized',
+      });
+    }
+    return User.find((error, user) => {
+      if (error || user === undefined) {
+        return res.status(401).send({
+          message: 'Unauthorized',
+        });
+      }
+      req.user = user;
+      return next();
+    }).where({ _id: client[0].user });
+  }).where({ refreshToken: req.body.refreshToken });
 }
 
 // POST to /register
@@ -58,7 +118,10 @@ router.post('/register', (req, res) => {
 router.post('/login', passport.authenticate(
   'local', {
     session: false,
-  }), serialize, generateToken, respond);
+  }), serializeUser, serializeClient, generateAccessToken, generateRefreshToken, respond.auth);
+
+// POST to /refresh
+router.post('/refresh', validateRefreshToken, generateAccessToken, respond.refresh);
 
 // GET to /logout
 router.get('/logout', (req, res) => {
