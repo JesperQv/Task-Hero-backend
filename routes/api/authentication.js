@@ -25,13 +25,13 @@ function serializeClient(req, res, next) {
 
   newClient.save((err) => {
     if (err) {
-      Client.findByIdAndUpdate(newClient._id, newClient, (fail, client) => {
+      Client.findByIdAndUpdate(newClient._id, newClient, (fail) => {
         if (fail) {
           return res.status(400).send({
             message: 'error updating client',
           });
         }
-        req.user.clientid = client.id;
+        req.user.clientid = newClient.id;
         return next();
       });
     }
