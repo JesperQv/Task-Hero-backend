@@ -22,7 +22,7 @@ function serializeClient(req, res, next) {
   const newClient = new Client({
     user: req.user,
   });
-  Client.findOneAndUpdate(
+  Client.update(
     { user: req.user }, // find a document with that filter
     newClient, // document to insert when nothing was found
     { upsert: true, new: true, runValidators: true }, // options
