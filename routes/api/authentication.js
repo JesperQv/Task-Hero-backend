@@ -22,20 +22,26 @@ function serializeClient(req, res, next) {
   const newClient = new Client({
     user: req.user,
   });
-  Client.update(
-    { user: req.user }, // find a document with that filter
-    newClient, // document to insert when nothing was found
-    { upsert: true, new: true, runValidators: true }, // options
-    (err, client) => { // callback
-      if (err) {
-        return res.status(400).send({
-          message: 'error saving client',
-        });
-      }
-      req.user.clientid = client.id;
-      return next();
-    },
-  );
+
+  newClient.save((err) => {
+    if (err) {
+      console.log('client exists already');
+      Client.findOneAndUpdate({ user: req.user }, newClient,
+        { upsert: true, new: true, runValidators: true }, (fail, client) => {
+          if (fail) {
+            return res.status(400).send({
+              message: 'error saving client',
+            });
+          }
+          req.user.clientid = client.id;
+          return next();
+        }).where({ user: req.user });
+    } else {
+      console.log('new client created');
+    }
+    req.user.clientid = newClient.id;
+    return next();
+  });
 }
 
 // ------- Token functions -------
