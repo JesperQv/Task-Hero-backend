@@ -22,20 +22,15 @@ function serializeClient(req, res, next) {
   const newClient = new Client({
     user: req.user,
   });
-
-  newClient.save((err) => {
+  Client.updateOrCreate({
+    user: req.user,
+  }, newClient, (err, client) => {
     if (err) {
-      Client.find((fail, client) => {
-        if (fail) {
-          return res.status(400).send({
-            message: 'error saving client',
-          });
-        }
-        req.user.clientid = client.id;
-        return next();
-      }).where({ user: req.user });
+      return res.status(400).send({
+        message: 'error saving client',
+      });
     }
-    req.user.clientid = newClient.id;
+    req.user.clientid = client.id;
     return next();
   });
 }
