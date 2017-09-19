@@ -19,7 +19,8 @@ function serializeUser(req, res, next) {
 }
 
 function serializeClient(req, res, next) {
-  console.log(JSON.stringify(req));
+  console.log(req.refreshToken);
+  console.log(req.token.refreshToken);
   const newClient = new Client({
     user: req.user,
   });
