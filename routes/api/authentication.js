@@ -33,7 +33,7 @@ function serializeClient(req, res, next) {
             message: 'error saving client',
           });
         }
-        req.user.clientid = client.id;
+        req.user.clientid = newClient.id;
         return next();
       });
     }
