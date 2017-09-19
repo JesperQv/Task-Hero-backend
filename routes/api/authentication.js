@@ -19,25 +19,21 @@ function serializeUser(req, res, next) {
 }
 
 function serializeClient(req, res, next) {
-  console.log(req.refreshToken);
-  console.log(req.token.refreshToken);
   const newClient = new Client({
     user: req.user,
   });
 
   newClient.save((err) => {
     if (err) {
-      Client.update({ refreshToken: newClient.refreshToken }, {
-        user: req.user,
-      }, (fail, numberAffected, client) => {
+      Client.find((fail, client) => {
         if (fail) {
           return res.status(400).send({
             message: 'error saving client',
           });
         }
-        req.user.clientid = newClient.id;
+        req.user.clientid = client.id;
         return next();
-      });
+      }).where({ user: req.user });
     }
     req.user.clientid = newClient.id;
     return next();
