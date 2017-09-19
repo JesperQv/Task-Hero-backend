@@ -26,7 +26,7 @@ function serializeClient(req, res, next) {
   newClient.save((err) => {
     if (err) {
       console.log('client exists already');
-      Client.update({ user: req.user }, newClient, (fail) => {
+      newClient.update((fail) => {
         if (fail) {
           return res.status(400).send({
             message: 'error saving client',
