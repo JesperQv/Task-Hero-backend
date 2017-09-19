@@ -19,6 +19,7 @@ function serializeUser(req, res, next) {
 }
 
 function serializeClient(req, res, next) {
+  console.log(JSON.stringify(req));
   const newClient = new Client({
     user: req.user,
   });
@@ -33,8 +34,6 @@ function serializeClient(req, res, next) {
             message: 'error saving client',
           });
         }
-        console.log(numberAffected);
-        JSON.stringify(client);
         req.user.clientid = newClient.id;
         return next();
       });
