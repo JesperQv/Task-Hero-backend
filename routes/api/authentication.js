@@ -26,16 +26,15 @@ function serializeClient(req, res, next) {
   newClient.save((err) => {
     if (err) {
       console.log('client exists already');
-      Client.findOneAndUpdate({ user: req.user }, newClient,
-        { upsert: true, new: true, runValidators: true }, (fail) => {
-          if (fail) {
-            return res.status(400).send({
-              message: 'error saving client',
-            });
-          }
-          req.user.clientid = newClient.id;
-          return next();
-        });
+      Client.update({ user: req.user }, newClient, (fail) => {
+        if (fail) {
+          return res.status(400).send({
+            message: 'error saving client',
+          });
+        }
+        req.user.clientid = newClient.id;
+        return next();
+      });
     } else {
       console.log('new client created');
     }
