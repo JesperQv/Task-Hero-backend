@@ -35,7 +35,7 @@ function serializeClient(req, res, next) {
           }
           req.user.clientid = client.id;
           return next();
-        }).where({ user: req.user });
+        });
     } else {
       console.log('new client created');
     }
