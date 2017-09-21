@@ -19,10 +19,10 @@ function serializeUser(req, res, next) {
 }
 
 function serializeClient(req, res, next) {
-  let newClient = new Client({
+  const newClient = new Client({
     user: req.user,
   });
-  console.log(JSON.stringify(newClient.user));
+  newClient.markModified('object');
 
   newClient.save((err) => {
     if (err) {
@@ -33,7 +33,6 @@ function serializeClient(req, res, next) {
     req.user.clientid = newClient.id;
     return next();
   });
-  newClient = null;
 }
 
 // ------- Token functions -------
