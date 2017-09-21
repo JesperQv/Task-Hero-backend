@@ -28,7 +28,6 @@ function serializeClient(req, res, next) {
     if (err) {
       req.user.clientid = newClient.id;
       console.log(err);
-      console.log(`clientId: ${req.user.clientid.toString()}`);
       return next();
     }
     req.user.clientid = newClient.id;
@@ -51,8 +50,7 @@ function generateRefreshToken(req, res, next) {
 
   Client.update({
     id: req.user.clientid,
-    refreshToken: req.token.refreshToken,
-  }, next);
+  }, { refreshToken: req.token.refreshToken }, next);
 }
 
 function validateRefreshToken(req, res, next) {
