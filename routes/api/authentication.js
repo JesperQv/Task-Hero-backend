@@ -26,7 +26,7 @@ function serializeClient(req, res, next) {
 
   newClient.save((err) => {
     if (err) {
-      console.log('client exists already');
+      console.log(err);
       req.user.clientid = newClient.id;
       return next();
     }
