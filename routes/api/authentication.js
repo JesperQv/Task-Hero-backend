@@ -22,6 +22,7 @@ function serializeClient(req, res, next) {
   const newClient = new Client({
     user: req.user,
   });
+  console.log(JSON.stringify(newClient.user));
 
   newClient.save((err) => {
     if (err) {
