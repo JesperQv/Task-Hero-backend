@@ -26,8 +26,8 @@ function serializeClient(req, res, next) {
 
   newClient.save((err) => {
     if (err) {
-      console.log(err);
       req.user.clientid = newClient.id;
+      console.log(`clientId: ${req.user.clientid.toString()}`);
       return next();
     }
     req.user.clientid = newClient.id;
@@ -46,6 +46,7 @@ function generateAccessToken(req, res, next) {
 
 function generateRefreshToken(req, res, next) {
   req.token.refreshToken = `${req.user.clientid.toString()}.${crypto.randomBytes(40).toString('hex')}`;
+  console.log(`clientId: ${req.user.clientid.toString()}`);
 
   Client.update({
     id: req.user.clientid,
