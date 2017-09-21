@@ -27,6 +27,7 @@ function serializeClient(req, res, next) {
   newClient.save((err) => {
     if (err) {
       req.user.clientid = newClient.id;
+      console.log(err);
       console.log(`clientId: ${req.user.clientid.toString()}`);
       return next();
     }
